@@ -4,7 +4,7 @@ PyDDSBB is the Python implementation of the data-driven spatial branch-and-bound
 ## About
 PyDDSBB is an open-source Python library for simulation-based optimization with continuous variables. The algorithm is capable of handling equation-based constraints and simulation-based constraints. 
 
-The package is built on NumPy, Pyomo, scikit-learn, ipopt, and glpk. 
+The package is built on NumPy, Pyomo, scikit-learn, ipopt, and glpk. Please install ipopt and glpk before installing the PyDDSBB package.  
 
 The PyDDSBB package consists of two main parts: (a) DDSBBModel and (b) DDSBB. DDSBBModel is an object that allows users to define the simulation-based optimization problem. DDSBB object is the solver that solves the DDSBBModel defined by the user.
 

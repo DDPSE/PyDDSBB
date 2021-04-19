@@ -10,4 +10,4 @@ __author__ = 'Jianyuan Zhai'
 __version__= '0.1.1'
 
 from .DDSBB import DDSBB
-from .DDSBBModel import Problem
+from .DDSBBModel import *

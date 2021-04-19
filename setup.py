@@ -16,5 +16,5 @@ setup(
       author_email = ['zhaijianyuan@gmail.com', 'fani.boukouvala@chbe.gatech.edu'],
       license = 'MIT',
       packages = ['PyDDSBB'],
-      install_requires = ['numpy','pyomo','scikit-learn', 'glpk', 'ipopt']
+      install_requires = ['numpy','pyomo','scikit-learn']
       )

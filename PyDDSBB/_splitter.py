@@ -6,7 +6,7 @@ Created on Tue Jul  7 13:34:48 2020
 @author: JianyuanZhai
 """
 import numpy as np
-from _machine_learning import LocalSVR
+from PyDDSBB._machine_learning import LocalSVR
 
 class Splitter:
     def __init__(self, split_method, variable_selection = 'longest_side', minimum_bd = 0.05):

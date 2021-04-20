@@ -7,7 +7,13 @@ Created on Sun Apr 18 19:14:00 2021
 """
 
 __author__ = 'Jianyuan Zhai'
-__version__= '0.1.1'
+__version__= '0.1.2'
 
-from .DDSBB import DDSBB
 from .DDSBBModel import *
+from ._machine_learning import *
+from ._node import *
+from ._problem import *
+from ._splitter import *
+from ._underestimators import *
+from ._utilis import *
+from .DDSBB import DDSBB

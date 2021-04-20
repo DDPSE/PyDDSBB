@@ -6,16 +6,16 @@ PyDDSBB @ GT - DDPSE
 @author: JianyuanZhai
 """
 import numpy as np
-from _utilis import LHS
-import _problem 
-import _underestimators 
+from PyDDSBB._utilis import LHS
+import PyDDSBB._problem as _problem 
+import PyDDSBB._underestimators 
 import time
-from _node import Node
-from _splitter import Splitter
-from _machine_learning import LocalSVR
+from PyDDSBB._node import Node
+from PyDDSBB._splitter import Splitter
+from PyDDSBB._machine_learning import LocalSVR
 import pyomo.environ as pe
 
-UNDERESTIMATORS = {'Quadratic': _underestimators.DDCU_Nonuniform}
+UNDERESTIMATORS = {'Quadratic': PyDDSBB._underestimators.DDCU_Nonuniform}
 INFINITY = np.inf
 
 

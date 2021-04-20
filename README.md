@@ -51,3 +51,5 @@ solver.print_result()
 yopt = solver.yopt_global  ### Get optimal solution 
 xopt = solver.xopt_global ### Get optimizer 
 ```
+## License
+[MIT](https://choosealicense.com/licenses/mit/)

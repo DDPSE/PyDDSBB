@@ -47,9 +47,10 @@ solver = PyDDSBB.DDSBB(23,split_method = 'equal_bisection', variable_selection =
 ### Solve the model 
 solver.optimize(model)     
 solver.print_result()
-###
+### Extract solution from the solver 
 yopt = solver.yopt_global  ### Get optimal solution 
 xopt = solver.xopt_global ### Get optimizer 
+lowerbound = solver.lowerbound_global ### Get lower bound 
 ```
 ## License
 [MIT](https://choosealicense.com/licenses/mit/)

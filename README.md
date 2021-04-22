@@ -23,14 +23,14 @@ pip install git+git://github.com/DDPSE/PyDDSBB/
 The following code is available in test.py
 ```Python
 import PyDDSBB
-
-def objective(x):
-    return x[0]
+### Test black-box problem with constraints ###
+def objective(x):  ### Objective Function 
+    return x[0]    
 def constraints(x):
-    if (x[0]-2.0)**2 + (x[1]-4.0)**2 <= 4.0 and (x[0]-3.0)**2 + (x[1]-3.0)**2 <= 4.0:
-        return 1.
+    if (x[0]-2.0)**2 + (x[1]-4.0)**2 <= 4.0 and (x[0]-3.0)**2 + (x[1]-3.0)**2 <= 4.0:   ### Constraints 
+        return 1.  ## 1 as feasible 
     else:
-        return 0.
+        return 0.  ## 0 as infeasible
     
 ### Define the model   
 model = PyDDSBB.DDSBBModel.Problem() ## Initializa a model

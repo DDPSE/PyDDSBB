@@ -23,14 +23,14 @@ pip install git+git://github.com/DDPSE/PyDDSBB/
 The following code is available in test.py
 ```Python
 import PyDDSBB
-
-def objective(x):
-    return x[0]
+### Test black-box problem with constraints ###
+def objective(x):  ### Objective Function 
+    return x[0]    
 def constraints(x):
-    if (x[0]-2.0)**2 + (x[1]-4.0)**2 <= 4.0 and (x[0]-3.0)**2 + (x[1]-3.0)**2 <= 4.0:
-        return 1.
+    if (x[0]-2.0)**2 + (x[1]-4.0)**2 <= 4.0 and (x[0]-3.0)**2 + (x[1]-3.0)**2 <= 4.0:   ### Constraints 
+        return 1.  ## 1 as feasible 
     else:
-        return 0.
+        return 0.  ## 0 as infeasible
     
 ### Define the model   
 model = PyDDSBB.DDSBBModel.Problem() ## Initializa a model
@@ -53,4 +53,24 @@ xopt = solver.xopt_global ### Get optimizer
 lowerbound = solver.lowerbound_global ### Get lower bound 
 ```
 ## License
-[MIT](https://choosealicense.com/licenses/mit/)
+MIT License
+
+Copyright (c) 2021 GT-DDPSE
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

@@ -42,7 +42,7 @@ class Tree:
             self.best_node = node.node
             self.best_level = node.level
             self.xopt_global = node.xopt_local        
-        if node.flb > self.yopt_global or node.flb == INFINITY: 
+        if node.flb > self.yopt_global: 
             node.set_decision(0)
         else:
             if node.yopt_local == INFINITY: 

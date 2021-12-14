@@ -258,8 +258,11 @@ class BoxConstrained(NodeOperation):
                     if ynew < self.yopt_local:
                         self.yopt_local = float(ynew)
                         self.xopt_local = xnew
-                    if  ynew >= self.ymin_local and ynew <= self.ymax_local:     
-                        Ynew = (ynew-self.ymin_local)/self.yrange               
+                    if  ynew >= self.ymin_local and ynew <= self.ymax_local:
+                        if self.yrange != 0.:
+                            Ynew = (ynew-self.yopt_local)/self.yrange 
+                        else:
+                            Ynew = 1.        
                         self.Y = np.append(self.Y, Ynew)   
                     elif ynew > self.ymax_local:
                         if ynew != INFINITY:
@@ -288,7 +291,11 @@ class BoxConstrained(NodeOperation):
                         self.valid_ind += [i + current for i in valid_ind]
                     self.y = np.append(self.y, ynew)                 
                     if ymin >= self.ymin_local and ymax <= self.ymax_local: 
-                        Ynew = (ynew - self.ymin_local)/self.yrange                
+                        Ynew = (ynew - self.ymin_local)/self.yrange
+                        if self.yrange != 0.:
+                            Ynew = (ynew - self.yopt_local)/self.yrange                
+                        else:
+                            Ynew = np.ones(len(index))
                         self.Y = np.append(self.Y, Ynew)                              
                     elif ymin >= self.ymin_local and ymax > self.ymax_local:
                         if ymax != INFINITY:
@@ -454,8 +461,11 @@ class BlackBox(NodeOperation):
                         self.yopt_local = float(ynew)
                         self.xopt_local = xnew
                         self.feasible_ind += [len(self.y)]
-                    if  ynew >= self.ymin_local and ynew <= self.ymax_local:     
-                        Ynew = (ynew-self.ymin_local)/self.yrange               
+                    if  ynew >= self.ymin_local and ynew <= self.ymax_local: 
+                        if self.yrange != 0.:
+                            Ynew = (ynew-self.ymin_local)/self.yrange     
+                        else:
+                            Ynew = 1.
                         self.Y = np.append(self.Y, Ynew)   
                     elif ynew > self.ymax_local:
                         if ynew != INFINITY:
@@ -487,7 +497,10 @@ class BlackBox(NodeOperation):
                         self.feasible_ind += [i + current for i in feasible]
                     self.y = np.append(self.y, ynew)                 
                     if ymin >= self.ymin_local and ymax <= self.ymax_local: 
-                        Ynew = (ynew - self.ymin_local)/self.yrange                
+                        if self.yrange != 0.:
+                            Ynew = (ynew - self.ymin_local)/self.yrange   
+                        else:
+                            Ynew = np.ones(len(index))
                         self.Y = np.append(self.Y, Ynew)                              
                     elif ymin >= self.ymin_local and ymax > self.ymax_local:
                         if ymax != INFINITY:

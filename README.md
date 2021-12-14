@@ -61,7 +61,9 @@ To initialize the solver, only one required input is needed, which is number of 
 ```Python
 solver = PyDDSBB.DDSBB(23)
 ```
+
 Here are the options for the DDSBB solver: 
+```Python
         multifidelity: bool  
                        True to turn on multifidelity approach 
                        False to turn off multifidelity approach (default)
@@ -89,6 +91,7 @@ Here are the options for the DDSBB solver:
         sense: str
                select from: minimize, maximize (inform the solver the direction of optimization)
         adaptive_sampling: function of level, dimension (method for adaptive sampling, can be a function of level, dimenion) 
+```
 ```Python
 solver = PyDDSBB.DDSBB(23,split_method = 'equal_bisection', variable_selection = 'longest_side', multifidelity = False, stop_option = {'absolute_tolerance': 0.05, 'relative_tolerance': 0.01, 'minimum_bound': 0.05, 'sampling_limit': 500, 'time_limit': 5000}) 
 ```

@@ -32,7 +32,7 @@ solver = PyDDSBB.DDSBB(23,split_method = 'equal_bisection', variable_selection =
 solver.optimize(Model)     
 solver.print_result()
 ###
-yopt = solver.yopt_global  ### Get optimal solution 
-xopt = solver.xopt_global ### Get optimizer 
+yopt = solver.get_optimum()  ### Get optimal solution 
+xopt = solver.get_optimizer() ### Get optimizer 
 
 

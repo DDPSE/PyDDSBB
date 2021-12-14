@@ -868,10 +868,21 @@ class DDSBB(Tree):
         print("Current level: " + str(self.level))
         print("Current node: " + str(self.builder.node))
         print("Number of samples used: " + str(self.builder.simulator.sample_number))
-        print("Current best " + self.report_UB + " :  " + str(self.yopt_global))
-        print("Current best " + self.report_LB + " :  " + str(self.lowerbound_global))
+        if self.builder.simulator._sense == "maximize":
+            print("Current best " + self.report_LB + " :  " + str( - self.yopt_global))
+            print("Current best " + self.report_UB + " :  " + str( - self.lowerbound_global))
+        else:
+            print("Current best " + self.report_UB + " :  " + str(self.yopt_global))
+            print("Current best " + self.report_LB + " :  " + str(self.lowerbound_global))
         print("Current absolute gap:  " + str(self.yopt_global - self.lowerbound_global))
         print("Current best optimizer: " + str(self.xopt_global))
+    def get_optimum(self):
+        if self.builder.simulator._sense == "maximize":
+            return -self.yopt_global
+        else:
+            return self.yopt_global
+    def get_optimizer(self):
+        return self.xopt_global
     def update_stop_criteria(self, new_stop):
         """
         update stop criteria

@@ -84,7 +84,7 @@ Here are the options for the DDSBB solver:
         stop_option: dict
                     Stopping criteria 
                     absolute_tolerance: float  (tolerance for gap between the lower and the upper bound)
-                    relative_tolerance: float  (tolerace for relative gap between the lower and the upper bound: absolute_gap/|lower bound| if it is an minimization problem)
+                    relative_tolerance: float  (tolerace for relative gap between the lower and the upper bound: absolute_gap/|lower bound| if it is a minimization problem)
                     minimum_bound: float (minimum bound distance on the input space to avoid cutting the search space too small)
                     sampling_limit: int (maximum number of samples)
                     time_limit: float (maximum run time (s))

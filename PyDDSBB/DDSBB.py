@@ -380,9 +380,11 @@ class BlackBox(NodeOperation):
     """
     Node operation for pure black-box constrained problems
     """
-    def __init__(self, multifidelity, split_method, variable_selection, underestimator_option, sampling_limit, minimum_bd):
+    def __init__(self, multifidelity, split_method, variable_selection, underestimator_option, sampling_limit, minimum_bd, inf_limit):
         super().__init__(multifidelity , split_method , variable_selection , underestimator_option, minimum_bd)
         self.sampling_limit = sampling_limit
+        self.inf_sampling_limit = inf_limit['sampling_limit']
+        self.inf_time_limit = inf_limit['time_limit']
     def _add_problem(self, problem):
         """
         Add problem to node operator
@@ -575,9 +577,13 @@ class BlackBox(NodeOperation):
         self.feasible_ind = [i for i in range(len(self.label)) if self.label[i] == 1.]        
         self._min_max_scaler()   
         self._adaptive_sample()
-        while self.feasible_ind == [] and self.simulator.sample_number < self.sampling_limit:
+        time_inf_i = time.time()
+        time_inf = 0
+        while self.feasible_ind == [] and len(self.y) < self.inf_sampling_limit and time_inf < self.inf_time_limit:
             self._set_adaptive(self.simulator.sample_number + 11*self.dim + 1)
-            self._adaptive_sample()        
+            self._adaptive_sample()   
+            time_inf = time.time() - time_inf_i
+            
         flb = self._training_DDCU()        
         root_node = Node(self.level, self.node, self.bounds)        
         root_node.add_data(self.x, self.y)
@@ -587,6 +593,13 @@ class BlackBox(NodeOperation):
         if self.variable_selection == 'svr_var_selection':
             root_node.add_score(self.MF.rank())
         root_node.add_valid_ind(self.valid_ind)
+        
+        if self.feasible_ind == []:
+            if len(self.y) >= self.inf_sampling_limit:
+                print('No feasible samples collected with ' + str(self.inf_sampling_limit) + ' points')
+            if time_inf >= self.inf_time_limit:
+                print('Time for checking feasibility exceeded')
+            print('Please check constraints')
         return root_node  
     def _training_DDCU(self):
         """
@@ -635,8 +648,10 @@ class GreyBox(BlackBox):
     """
     Node operations for greybox constrained problems (mixed know and unknown problems)
     """
-    def __init__(self, multifidelity, split_method, variable_selection, underestimator_option, sampling_limit, minimum_bd):
-        super().__init__(multifidelity , split_method , variable_selection , underestimator_option, sampling_limit, minimum_bd)
+    def __init__(self, multifidelity, split_method, variable_selection, underestimator_option, sampling_limit, minimum_bd, inf_limit):
+        super().__init__(multifidelity , split_method , variable_selection , underestimator_option, sampling_limit, minimum_bd, inf_limit)
+        self.inf_sampling_limit = inf_limit['sampling_limit']
+        self.inf_time_limit = inf_limit['time_limit']
     def _add_problem(self, problem):
         """
         Add problem to the solver
@@ -786,9 +801,12 @@ class GreyBox(BlackBox):
             self.feasible_ind = [i for i in range(len(self.label)) if self.label[i] == 1.]        
             self._min_max_scaler()   
             self._adaptive_sample()
-            while self.feasible_ind == [] and self.simulator.sample_number < self.sampling_limit:
+            time_inf_i = time.time()
+            time_inf = 0
+            while self.feasible_ind == [] and self.simulator.sample_number < self.inf_sampling_limit and time_inf < self.inf_time_limit:
                 self._set_adaptive(self.simulator.sample_number + 11*self.dim + 1)
-                self._adaptive_sample()        
+                self._adaptive_sample() 
+                time_inf = time.time() - time_inf_i
             flb = self._training_DDCU()        
             root_node = Node(self.level, self.node, self.bounds)        
             root_node.add_data(self.x, self.y)
@@ -802,10 +820,16 @@ class GreyBox(BlackBox):
             root_node = Node(self.level, self.node, self.bounds)
             root_node.set_opt_flb(INFINITY)
             root_node.set_opt_local(INFINITY, None)
+        if self.feasible_ind == []:
+            if len(self.y) >= self.inf_sampling_limit:
+                print('No feasible samples collected with ' + str(self.inf_sampling_limit) + ' points')
+            if time_inf >= self.inf_time_limit:
+                print('Time for checking feasibility exceeded')
+            print('Please check constraints')
         return root_node  
 
 class DDSBB(Tree):
-    def __init__(self, number_init_samples, multifidelity = False, split_method = 'equal_bisection', variable_selection = 'longest_side', underestimator_option = 'Quadratic', stop_option = {'absolute_tolerance': 0.05, 'relative_tolerance': 0.01, 'minimum_bound': 0.05, 'sampling_limit': 10000, 'time_limit': 36000}, sense = 'minimize', adaptive_sampling = None):
+    def __init__(self, number_init_samples, multifidelity = False, split_method = 'equal_bisection', variable_selection = 'longest_side', underestimator_option = 'Quadratic', stop_option = {'absolute_tolerance': 0.05, 'relative_tolerance': 0.01, 'minimum_bound': 0.05, 'sampling_limit': 10000, 'time_limit': 36000}, infeasible_limit = {'sampling_limit':1000, 'time_limit': 3600}, sense = 'minimize', adaptive_sampling = None):
         """
         Initialize DDSBB solver
         
@@ -848,7 +872,7 @@ class DDSBB(Tree):
         self.split_method = split_method
         self.variable_selection = variable_selection
         self.underestimator_option = underestimator_option
-                           
+        self.infeasible_limit =  infeasible_limit                  
         for i in stop_option.keys():
             setattr(self, i, stop_option[i])
         if sense == 'minimize' :
@@ -974,9 +998,9 @@ class DDSBB(Tree):
         if problem._number_unknown_constraint == 0 and problem._number_known_constraint == 0:            
             self.builder = BoxConstrained(self.multifidelity, self.split_method, self.variable_selection, self.underestimator_option, self.minimum_bound)
         elif problem._number_unknown_constraint != 0  and problem._number_known_constraint == 0:
-            self.builder = BlackBox(self.multifidelity, self.split_method, self.variable_selection, self.underestimator_option, self.sampling_limit, self.minimum_bound)
+            self.builder = BlackBox(self.multifidelity, self.split_method, self.variable_selection, self.underestimator_option, self.sampling_limit, self.minimum_bound, self.infeasible_limit)
         elif problem._number_unknown_constraint != 0 and problem._number_known_constraint != 0:
-            self.builder = GreyBox(self.multifidelity, self.split_method, self.variable_selection, self.underestimator_option, self.sampling_limit, self.minimum_bound)
+            self.builder = GreyBox(self.multifidelity, self.split_method, self.variable_selection, self.underestimator_option, self.sampling_limit, self.minimum_bound, self.infeasible_limit)
         self.builder._add_problem(problem)
         self.builder._set_adaptive(self.init_sample)  
         self.dim = self.builder.dim

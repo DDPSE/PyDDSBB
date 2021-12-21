@@ -26,7 +26,7 @@ Model.add_variable(1., 5.5) ## Add the second variable
 
 ### Initialize the solver ##
 
-solver = PyDDSBB.DDSBB(23,split_method = 'equal_bisection', variable_selection = 'longest_side', multifidelity = False, stop_option = {'absolute_tolerance': 0.05, 'relative_tolerance': 0.01, 'minimum_bound': 0.05, 'sampling_limit': 500, 'time_limit': 5000}) 
+solver = PyDDSBB.DDSBB(23,split_method = 'equal_bisection', variable_selection = 'longest_side', multifidelity = False, stop_option = {'absolute_tolerance': 0.05, 'relative_tolerance': 0.01, 'minimum_bound': 0.05, 'sampling_limit': 500, 'time_limit': 50},infeasible_limit = {'sampling_limit':100, 'time_limit': 36}) 
 
 ### Solve the model 
 solver.optimize(Model)     

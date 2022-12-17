@@ -17,11 +17,11 @@ conda install git pip
 
 The code can be directly installed from github using the following command: 
 ```bash
-pip install git+git://github.com/DDPSE/PyDDSBB/
+pip install git+https://github.com/DDPSE/PyDDSBB/
 ```
 The package can be updated from github using the following command: 
 ```bash
-pip install update git+git://github.com/DDPSE/PyDDSBB/
+pip install update git+https://github.com/DDPSE/PyDDSBB/
 ```
 ## Usage
 To import the package after installation, 

@@ -1,21 +1,25 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Tue Jul  7 13:32:23 2020
 
-@author: apple
 """
+@Created on Tue Jul  7 13:32:23 2020
+@Updated on Tue Jul 08 01:15:48 2025
+@authors: JianyuanZhai, Suryateja Ravutla
+"""
+
 import time
 import numpy as np
 
 from sklearn.svm import SVR
+from sklearn.model_selection import train_test_split
+
 class MachineLearning:
     """
     Base class for all machine learning model
     """
     def __init__(self, model = 'SVR'):
         self._model_type = 'SVR'
-    def _predict(self, X):
+    def _predict(self, X, y, multifidelity):
         return self.model.predict(X)
 
 class LocalSVR(MachineLearning):

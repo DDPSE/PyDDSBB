@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Thu Jun  4 21:02:17 2020
 
-@author: apple
 """
+@Created on Thu Jun  4 21:02:17 2020
+@Updated on Tue Jul 08 01:15:48 2025
+@authors: JianyuanZhai, Suryateja Ravutla
+"""
+
 import numpy as np
 class LHS:
     @staticmethod 
@@ -60,4 +62,6 @@ class LHS:
             distance = np.delete(distance, selected, 0)            
             distance = np.array([min(np.sum((np.array(current_design[-1,:]) - candidates[i,:])**2),distance[i]) for i in range(len(candidates))])            
         new_design = np.array(new_points)
+        
+        
         return new_design

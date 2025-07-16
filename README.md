@@ -8,7 +8,7 @@ The package is built on NumPy, Pyomo, scikit-learn, ipopt, and glpk. Please inst
 
 The PyDDSBB package consists of two main parts: (a) DDSBBModel and (b) DDSBB. DDSBBModel is an object that allows users to define the simulation-based optimization problem. DDSBB object is the solver that solves the DDSBBModel defined by the user.
 
-If you have any questions or concerns, please send an email to zhaijianyuan@gmail.com or fani.boukouvala@chbe.gatech.edu
+If you have any questions or concerns, please send an email to zhaijianyuan@gmail.com or suryateja.ravutla@gmail.com or fani.boukouvala@chbe.gatech.edu
 
 ## Installation
 

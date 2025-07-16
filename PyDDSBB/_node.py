@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Tue Jul  7 13:31:40 2020
 
-@author: JianyuanZhai
+"""
+@Created on Tue Jul  7 13:31:40 2020
+@Updated on Tue Jul 08 01:15:48 2025
+@authors: JianyuanZhai, Suryateja Ravutla
 """
 
 class Node:
@@ -79,6 +80,8 @@ class Node:
              local lower bound 
         """
         self.flb = flb
+    def set_lipschitz(self, lipschitz):
+        self.lipschitz = lipschitz
     def set_decision(self, decision):
         """
         Set pruning decision 

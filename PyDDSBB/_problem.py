@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Thu Jun  4 18:15:08 2020
 
-@author: JianyuanZhai
 """
+@Created on Thu Jun  4 18:15:08 2020
+@Updated on Tue Jul 08 01:15:48 2025
+@authors: JianyuanZhai, Suryateja Ravutla
+"""
+
 import numpy as np
 import time
 class BoundConstrainedSimulation:

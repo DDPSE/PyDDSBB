@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Tue Jul  7 13:34:48 2020
 
-@author: JianyuanZhai
 """
+@Created on Tue Jul  7 13:34:48 2020
+@Updated on Tue Jul 08 01:15:48 2025
+@authors: JianyuanZhai, Suryateja Ravutla
+"""
+
 import numpy as np
 from PyDDSBB._machine_learning import LocalSVR
 

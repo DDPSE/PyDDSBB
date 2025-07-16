@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-PyDDSBB @ GT - DDPSE
-
-@author: JianyuanZhai
+@Updated on Tue Jul 08 01:15:48 2025
+@authors: Jianyuan Zhai, Suryateja Ravutla
 """
+
 import numpy as np
 from PyDDSBB._utilis import LHS
 import PyDDSBB._problem as _problem 
@@ -15,7 +15,12 @@ from PyDDSBB._splitter import Splitter
 from PyDDSBB._machine_learning import LocalSVR
 import pyomo.environ as pe
 
-UNDERESTIMATORS = {'Quadratic': PyDDSBB._underestimators.DDCU_Nonuniform}
+UNDERESTIMATORS = {'Quadratic':  PyDDSBB._underestimators.DDCU_Nonuniform, 
+                   'Lipschitz-QU':  PyDDSBB._underestimators.DDCU_Nonuniform_with_LC, } 
+                #    'Lipschitz-QUB': _underestimators.DDCU_Nonuniform_with_LC_IC,
+                #    'Hybrid-Lipschitz-QU': _underestimators.DDCU_Nonuniform_with_LCbound,  
+                #    'Hybrid-Lipschitz-QUB': _underestimators.DDCU_Nonuniform_with_LCbound_IC}
+
 INFINITY = np.inf
 
 
@@ -28,6 +33,8 @@ class Tree:
         self.yopt_global = INFINITY
         self.xopt_global = None
         self.min_xrange = INFINITY
+        self.lipschitz_current = INFINITY
+
     def _activate_node(self):
         pass  
     def _add_level(self):    
@@ -36,12 +43,15 @@ class Tree:
         self.lowerbound_global = self.flb_current 
         self.flb_current = INFINITY  
         self._xopt_hist.append(self.xopt_global)
+        self.lipschitz = self.lipschitz_current
+        self.lipschitz_current = INFINITY
     def _add_node(self, node):
         if node.yopt_local <= self.yopt_global:
             self.yopt_global = node.yopt_local
             self.best_node = node.node
             self.best_level = node.level
-            self.xopt_global = node.xopt_local        
+            self.xopt_global = node.xopt_local  
+            self.lipschitz = node.lipschitz
         if node.flb > self.yopt_global: 
             node.set_decision(0)
         else:
@@ -59,6 +69,8 @@ class Tree:
                     self.flb_current = node.flb
                 if node.min_xrange < self.min_xrange:
                     self.min_xrange = node.min_xrange
+                if node.lipschitz < self.lipschitz_current:
+                    self.lipschitz_current = node.lipschitz
         self.Tree[self.current_level][node.node] = node 
         
    
@@ -99,7 +111,7 @@ class NodeOperation:
         Use augmented latin hypercube strategy to add more samples
         """
         x_corner = np.zeros((2,self.dim))
-        x_corner[1,:] = 1.0       
+        x_corner[1,:] = 1.0   
         self._update_sample(x_corner)
         if self.adaptive_number - len(self.y) > 0:
             Xnew = LHS.augmentLHS(self.X, self.adaptive_number - len(self.y))
@@ -222,12 +234,14 @@ class BoxConstrained(NodeOperation):
         self.bounds = child_bounds
         self._min_max_scaler()
         self._adaptive_sample()
-        flb = self._training_DDCU()    
+        flb, lipschitz = self._training_DDCU()    
         self.node += 1
         child = Node(parent.level + 1, self.node, self.bounds, parent.node)
         child.add_data(self.x, self.y)
         child.set_opt_flb(flb)
         child.set_opt_local(self.yopt_local, self.xopt_local)
+        child.set_lipschitz(lipschitz)
+        
         if self.variable_selection == 'svr_var_selection':
             child.add_score(self.MF.rank())
         child.add_valid_ind(self.valid_ind)
@@ -241,7 +255,14 @@ class BoxConstrained(NodeOperation):
               new samples scaled between 0 and 1
         
         """
-        index = [i for i in range(len(Xnew)) if (np.round(abs(self.X - Xnew[i, :]), 3) != 0.).all()] 
+
+        index = [
+                i for i in range(len(Xnew)) 
+                if not np.any(np.all(np.round(self.X, 3) == np.round(Xnew[i, :], 3), axis=1))
+                ]
+
+        
+        
         if index != []:
             Xnew = Xnew[index, :]
             xnew = self._min_max_rescaler(Xnew)
@@ -318,16 +339,19 @@ class BoxConstrained(NodeOperation):
         """
         self.level = 0        
         self.x = self.bounds
+        self.overallBounds = (self.bounds[1, :] - self.bounds[0, :]) 
         self.node = 0
         self.y = self.simulator._simulate(self.bounds)
         self.valid_ind = [i for i in range(len(self.y)) if self.y[i] != INFINITY]
         self._min_max_scaler()        
         self._adaptive_sample()
-        flb = self._training_DDCU()
+        flb, lipschitz = self._training_DDCU()
         root_node = Node(self.level, self.node, self.bounds)        
         root_node.add_data(self.x, self.y)
         root_node.set_opt_flb(flb)
         root_node.set_opt_local(self.yopt_local, self.xopt_local)
+        root_node.set_lipschitz(lipschitz)
+        
         if self.variable_selection == 'svr_var_selection':
             root_node.add_score(self.MF.rank())
         root_node.add_valid_ind(self.valid_ind)
@@ -353,19 +377,26 @@ class BoxConstrained(NodeOperation):
                         all_Y = self.Y[self.valid_ind]
                     elif iteration == 0 :
                         self.MF._train(self.X[self.valid_ind,:], self.Y[self.valid_ind])                        
-                        lowfidelity_X = np.random.random_sample((min(50*self.dim, 251), self.dim))            
-                        lowfidelity_Y = self.MF._predict(lowfidelity_X)
+                        lowfidelity_X = np.random.random_sample((min(50*self.dim, 251), self.dim))     
+
+                        lowfidelity_Y = self.MF._predict(lowfidelity_X, self.Y[self.valid_ind], self.multifidelity)
                         lowfidelity_Xopt = lowfidelity_X[np.argmin(lowfidelity_Y), :]
                         self._update_sample(np.array([lowfidelity_Xopt]))
                         all_Y = np.concatenate((self.Y[self.valid_ind], lowfidelity_Y), axis=0)
                         all_X = np.concatenate((self.X[self.valid_ind, :], lowfidelity_X), 0)
-                    flb_s, Xnew = self._underestimate(all_X, all_Y)
+                        
+                    if self.multifidelity is False:
+                        flb_s, lipschitz, Xnew = self._underestimate(all_X, all_Y,[], [], self.xrange, self.yrange, self.bounds, self.ymin_local, self.overallBounds)
+                    else:
+                        flb_s, lipschitz, Xnew = self._underestimate(all_X, all_Y,lowfidelity_X, lowfidelity_Y, self.xrange, self.yrange, self.bounds, self.ymin_local, self.overallBounds)
                     break
+
                 except:
                     check += 1
                     if check > 20:
                         raise RuntimeError('ERROR: Failed to train DDCU')
             flb = flb_s * self.yrange + self.ymin_local
+            lipschitz = np.max(lipschitz*self.yrange/self.xrange)
             self._update_sample(Xnew)
             if abs(self.ymin_local - flb) <= 1E-6:
                 flb = self.ymin_local
@@ -374,7 +405,7 @@ class BoxConstrained(NodeOperation):
                 raise RuntimeError('ERROR: Failed to find a valid bound within 20 iterations')
         self.time_underestimate += time.time() - time_start
 
-        return float(flb)
+        return float(flb), float(lipschitz)
 
 class BlackBox(NodeOperation):
     """
@@ -443,7 +474,11 @@ class BlackBox(NodeOperation):
               new samples scaled between 0 and 1
         
         """
-        index = [i for i in range(len(Xnew)) if (np.round(abs(self.X - Xnew[i, :]), 3) != 0.).all()] ## Find which samples are to be collected 
+        
+        index = [
+                i for i in range(len(Xnew)) 
+                if not np.any(np.all(np.round(self.X, 3) == np.round(Xnew[i, :], 3), axis=1))
+                ] ## Find which samples are to be collected 
         if index != []:
             Xnew = Xnew[index, :]
             xnew = self._min_max_rescaler(Xnew)
@@ -553,12 +588,13 @@ class BlackBox(NodeOperation):
         elif len(self.y) == 1: 
             self._min_max_single_scaler() 
         self._adaptive_sample()
-        flb = self._training_DDCU()    
+        flb, lipschitz = self._training_DDCU()    
         self.node += 1
         child = Node(parent.level + 1, self.node, self.bounds, parent.node)
         child.add_data(self.x, self.y)
         child.set_opt_flb(flb)
         child.set_opt_local(self.yopt_local, self.xopt_local)
+        child.set_lipschitz(lipschitz)
         child.add_label(self.label)
         if self.variable_selection == 'svr_var_selection':
             child.add_score(self.MF.rank())
@@ -570,6 +606,7 @@ class BlackBox(NodeOperation):
         """
         self.level = 0        
         self.x = self.bounds
+        self.overallBounds = (self.bounds[1, :] - self.bounds[0, :]) 
         self.node = 0
         self.y = self.simulator._simulate(self.bounds)
         self.label = self.simulator._check_feasibility(self.x)
@@ -584,12 +621,13 @@ class BlackBox(NodeOperation):
             self._adaptive_sample()   
             time_inf = time.time() - time_inf_i
             
-        flb = self._training_DDCU()        
+        flb, lipschitz = self._training_DDCU()        
         root_node = Node(self.level, self.node, self.bounds)        
         root_node.add_data(self.x, self.y)
         root_node.set_opt_flb(flb)
         root_node.add_label(self.label)
         root_node.set_opt_local(self.yopt_local, self.xopt_local)
+        root_node.set_lipschitz(lipschitz)
         if self.variable_selection == 'svr_var_selection':
             root_node.add_score(self.MF.rank())
         root_node.add_valid_ind(self.valid_ind)
@@ -614,6 +652,7 @@ class BlackBox(NodeOperation):
         iteration = 0
         flb = INFINITY
         while flb > self.ymin_local :
+                       
             check = 0            
             while True:
                 try:
@@ -622,31 +661,38 @@ class BlackBox(NodeOperation):
                         all_Y = self.Y[self.valid_ind]
                     elif iteration == 0 :
                         self.MF._train(self.X[self.valid_ind, :], self.Y[self.valid_ind])                        
-                        lowfidelity_X = np.random.random_sample((min(50*self.dim, 251), self.dim))            
-                        lowfidelity_Y = self.MF._predict(lowfidelity_X)
+                        lowfidelity_X = np.random.random_sample((min(50*self.dim, 251), self.dim))     
+
+                        lowfidelity_Y = self.MF._predict(lowfidelity_X, self.Y[self.valid_ind], self.multifidelity)
                         lowfidelity_Xopt = lowfidelity_X[np.argmin(lowfidelity_Y), :]
                         self._update_sample(np.array([lowfidelity_Xopt]))
                         all_Y = np.concatenate((self.Y[self.valid_ind], lowfidelity_Y), axis=0)
-                        all_X = np.concatenate((self.X[self.valid_ind, :], lowfidelity_X), 0)                   
-                    flb_s, Xnew = self._underestimate(all_X, all_Y)
+                        all_X = np.concatenate((self.X[self.valid_ind, :], lowfidelity_X), 0)  
+
+                    if self.multifidelity is False:
+                        flb_s, lipschitz, Xnew = self._underestimate(all_X, all_Y,[], [], self.xrange, self.yrange, self.bounds, self.ymin_local, self.overallBounds)
+                    else:
+                        flb_s, lipschitz, Xnew = self._underestimate(all_X, all_Y,lowfidelity_X, lowfidelity_Y, self.xrange, self.yrange, self.bounds, self.ymin_local, self.overallBounds)
                     break
                 except:
                     check += 1
                     if check > 20:
-                        raise 'FAILDED'
+                        raise 'FAILED'
             flb = flb_s * self.yrange + self.ymin_local
+            lipschitz = np.max(lipschitz*self.yrange/self.xrange)
+
             self._update_sample(Xnew)
-            if abs(self.ymin_local - flb) <= 10**-6:
+            if abs(self.ymin_local - flb) <= 1E-6:
                 flb = self.ymin_local
             iteration +=1
             if iteration > 20:
                 raise "ERROR: Failed to find a valid bound within 20 iterations"
         self.time_underestimate += time.time() - time_start
-        return float(flb)
+        return float(flb), float(lipschitz)
         
 class GreyBox(BlackBox):
     """
-    Node operations for greybox constrained problems (mixed know and unknown problems)
+    Node operations for greybox constrained problems (mixed known and unknown problems)
     """
     def __init__(self, multifidelity, split_method, variable_selection, underestimator_option, sampling_limit, minimum_bd, inf_limit):
         super().__init__(multifidelity , split_method , variable_selection , underestimator_option, sampling_limit, minimum_bd, inf_limit)
@@ -771,10 +817,11 @@ class GreyBox(BlackBox):
                 self.x = parent.x[ind, :]
                 self._min_max_single_scaler()                        
             self._adaptive_sample()
-            flb = self._training_DDCU()                
+            flb, lipschitz = self._training_DDCU()            
             child.add_data(self.x, self.y)
             child.set_opt_flb(flb)
             child.set_opt_local(self.yopt_local, self.xopt_local)
+            child.set_lipschitz(lipschitz)
             child.add_label(self.label)
             if self.variable_selection == 'svr_var_selection':
                 child.add_score(self.MF.rank())
@@ -784,6 +831,7 @@ class GreyBox(BlackBox):
             child.add_data(self.x, self.y)
             child.add_label(self.label)
             child.set_opt_local(INFINITY,  None)
+            child.set_lipschitz(INFINITY)
         return child
     def _create_root_node(self): 
         """
@@ -791,6 +839,7 @@ class GreyBox(BlackBox):
         """
         self.level = 0        
         self.x = self.bounds
+        self.overallBounds = (self.bounds[1, :] - self.bounds[0, :]) 
         check = self._check_node_feasibility() ### Check feasibility of the root node 
         self.node = 0
         if check == 1:
@@ -807,12 +856,13 @@ class GreyBox(BlackBox):
                 self._set_adaptive(self.simulator.sample_number + 11*self.dim + 1)
                 self._adaptive_sample() 
                 time_inf = time.time() - time_inf_i
-            flb = self._training_DDCU()        
+            flb, lipschitz = self._training_DDCU()        
             root_node = Node(self.level, self.node, self.bounds)        
             root_node.add_data(self.x, self.y)
             root_node.set_opt_flb(flb)
             root_node.add_label(self.label)
             root_node.set_opt_local(self.yopt_local, self.xopt_local)
+            root_node.set_lipschitz(lipschitz)
             if self.variable_selection == 'svr_var_selection':
                 root_node.add_score(self.MF.rank())
             root_node.add_valid_ind(self.valid_ind)
@@ -820,6 +870,8 @@ class GreyBox(BlackBox):
             root_node = Node(self.level, self.node, self.bounds)
             root_node.set_opt_flb(INFINITY)
             root_node.set_opt_local(INFINITY, None)
+            root_node.set_lipschitz(INFINITY)
+
         if self.feasible_ind == []:
             if len(self.y) >= self.inf_sampling_limit:
                 print('No feasible samples collected with ' + str(self.inf_sampling_limit) + ' points')
@@ -992,6 +1044,7 @@ class DDSBB(Tree):
         self._xopt_hist = []
         self._sampling_hist = []
         self._cpu_hist = []
+        self._lipschitz_hist = []
         self.time_start = time.time()
         self.search_instance = 1
         self.stop_message = 'In search process'
@@ -1006,6 +1059,7 @@ class DDSBB(Tree):
         self.dim = self.builder.dim
         self._add_node(self.builder._create_root_node())
         self._completion_indicator = True 
+        
         self._check_convergence()
         if self.stop == 0.:
             self._check_resources()
@@ -1027,9 +1081,11 @@ class DDSBB(Tree):
         self.time_total = time.time() - self.time_start + self.time_elapsed
     def _check_convergence(self):
         self.lowerbound_global = self.flb_current
+        self.lipschitz = self.lipschitz_current
         self._lowerbound_hist.append(self.lowerbound_global)
         self._upperbound_hist.append(self.yopt_global)
         self._sampling_hist.append(self.builder.simulator.sample_number)
+        self._lipschitz_hist.append(self.lipschitz)
         if self.search_instance == 1:
             self.time_total = time.time() - self.time_start
         else:

@@ -17,9 +17,9 @@ import pyomo.environ as pe
 
 UNDERESTIMATORS = {'Quadratic':  PyDDSBB._underestimators.DDCU_Nonuniform, 
                    'Lipschitz-QU':  PyDDSBB._underestimators.DDCU_Nonuniform_with_LC,  
-                   'Lipschitz-QUB': PyDDSBB._underestimators.DDCU_Nonuniform_with_LC_and_IC,}
-                #    'Hybrid-Lipschitz-QU': _underestimators.DDCU_Nonuniform_with_LCbound,  
-                #    'Hybrid-Lipschitz-QUB': _underestimators.DDCU_Nonuniform_with_LCbound_IC}
+                   'Hybrid-Lipschitz-QU': PyDDSBB._underestimators.DDCU_Nonuniform_with_LC_and_IC,
+                   'Lipschitz-QUB': PyDDSBB._underestimators.DDCU_Nonuniform_with_LC_and_bound,}  
+                #    'Hybrid-Lipschitz-QUB': PyDDSBB._underestimators.DDCU_Nonuniform_with_LCbound_IC}
 
 INFINITY = np.inf
 

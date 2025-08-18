@@ -641,30 +641,7 @@ class DDCU_Nonuniform_with_LC_and_IC_and_bound():
         if options:
             for key, value in options.items():
                 self.solver.options[key] = value
-    
-    @staticmethod
-    def is_convex(all_Y):
-        """
-        Check if the function represented by all_Y is convex.
 
-        For a 1D function, it is convex if there is at most one local minimum.
-
-        Parameters:
-        - all_Y: numpy.ndarray, shape (n_samples,)
-
-        Returns:
-        - bool: True if convex, False otherwise
-        """
-        if len(all_Y) < 3:
-            # With less than 3 points, cannot determine convexity; assume convex
-            return True
-
-        minima_indices = argrelextrema(all_Y, np.less)[0]
-
-        # Debug: Print number of local minima
-        # print(f"Number of local minima: {len(minima_indices)}")
-
-        return len(minima_indices) <= 1 
     
     @staticmethod
     def estimate_lipschitz_constant(all_X, all_Y, n_neighbors=5):

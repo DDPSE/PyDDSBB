@@ -12,7 +12,7 @@ setup(
       name = 'PyDDSBB',
       version = '0.1.3',
       description = 'Data-driven Spatial Branch-and-bound Algorithm for Python',
-      author = ['Jianyuan Zhai', 'Fani Boukouvala'],
+      author = ['Jianyuan Zhai', 'Suryateja Ravutla', 'Fani Boukouvala'],
       author_email = ['zhaijianyuan@gmail.com', 'fani.boukouvala@chbe.gatech.edu'],
       license = 'MIT',
       packages = ['PyDDSBB'],

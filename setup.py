@@ -3,7 +3,7 @@
 """
 Created on Sun Apr 18 18:44:11 2021
 
-@author: JianyuanZhai
+@author: JianyuanZhai, SuryatejaRavutla
 """
 
 from setuptools import setup

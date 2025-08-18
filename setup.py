@@ -13,7 +13,7 @@ setup(
       version = '0.1.3',
       description = 'Data-driven Spatial Branch-and-bound Algorithm for Python',
       author = ['Jianyuan Zhai', 'Suryateja Ravutla', 'Fani Boukouvala'],
-      author_email = ['zhaijianyuan@gmail.com', 'fani.boukouvala@chbe.gatech.edu'],
+      author_email = ['zhaijianyuan@gmail.com', 'suryateja.ravutla@gmail.com', 'fani.boukouvala@chbe.gatech.edu'],
       license = 'MIT',
       packages = ['PyDDSBB'],
       install_requires = ['numpy','pyomo','scikit-learn']

@@ -612,6 +612,210 @@ class DDCU_Nonuniform_with_LC_and_bound():
 
   ##=======================================================================================================================
 
+class DDCU_Nonuniform_with_LC_and_IC_and_bound():
+    def __init__(self, intercept=True):
+        self.intercept = intercept
+        self.time_underestimate = 0.
+
+    @staticmethod
+    def _minimize_1d_vec(a_array, b_array, c):
+        """Vectorized version of minimize function over [0,1] for quadratic."""
+        xopt = np.zeros_like(a_array)
+        with np.errstate(divide='ignore', invalid='ignore'):
+            a_positive = a_array > 0.
+            check = -b_array / (2 * a_array)
+            within_bounds = (check >= 0.) & (check <= 1.)
+            xopt[a_positive & within_bounds] = check[a_positive & within_bounds]
+            xopt[a_positive & (check < 0.)] = 0.
+            xopt[a_positive & (check > 1.)] = 1.
+
+            a_zero = np.isclose(a_array, 0., atol=1e-5)
+            xopt[a_zero & (b_array > 0.)] = 0.
+            xopt[a_zero & (b_array < 0.)] = 1.
+            xopt[a_zero & np.isclose(b_array, 0.)] = 0.5
+
+        return xopt
+
+    def update_solver(self, solver, options=None):
+        self.solver = pe.SolverFactory(solver)
+        if options:
+            for key, value in options.items():
+                self.solver.options[key] = value
+    
+    @staticmethod
+    def is_convex(all_Y):
+        """
+        Check if the function represented by all_Y is convex.
+
+        For a 1D function, it is convex if there is at most one local minimum.
+
+        Parameters:
+        - all_Y: numpy.ndarray, shape (n_samples,)
+
+        Returns:
+        - bool: True if convex, False otherwise
+        """
+        if len(all_Y) < 3:
+            # With less than 3 points, cannot determine convexity; assume convex
+            return True
+
+        minima_indices = argrelextrema(all_Y, np.less)[0]
+
+        # Debug: Print number of local minima
+        # print(f"Number of local minima: {len(minima_indices)}")
+
+        return len(minima_indices) <= 1 
+    
+    @staticmethod
+    def estimate_lipschitz_constant(all_X, all_Y, n_neighbors=5):
+        """
+        Estimate the Lipschitz constant by considering the nearest neighbors.
+
+        Parameters:
+        - all_X: numpy.ndarray, shape (n_samples, n_features)
+        - all_Y: numpy.ndarray, shape (n_samples,)
+        - n_neighbors: int, number of nearest neighbors to consider
+
+        Returns:
+        - maxL: float, estimated Lipschitz constant
+        - rates: dict, Lipschitz constants for each sample
+        """
+        n_samples = all_X.shape[0]
+
+        if n_samples == 0:
+            raise ValueError("The input dataset all_X is empty.")
+        if n_samples == 1:
+            # Only one sample; Lipschitz constant is zero
+            return 0.0, {0: 0.0}
+
+        max_possible_neighbors = n_samples - 1  # Exclude the point itself
+        if n_neighbors > max_possible_neighbors:
+            n_neighbors = max_possible_neighbors
+            warnings.warn(
+                f"n_neighbors is greater than the number of available samples minus one. "
+                f"Adjusted n_neighbors to {n_neighbors}.",
+                UserWarning
+            )
+
+        nbrs = NearestNeighbors(n_neighbors=n_neighbors+1, algorithm='auto').fit(all_X)
+
+        distances, indices = nbrs.kneighbors(all_X)
+
+        # Exclude the first neighbor (the point itself)
+        distances = distances[:, 1:]  # Shape: (n_samples, n_neighbors)
+        indices = indices[:, 1:]      # Shape: (n_samples, n_neighbors)
+
+        f_differences = np.abs(all_Y[:, np.newaxis] - all_Y[indices])  # Shape: (n_samples, n_neighbors)
+
+        with np.errstate(divide='ignore', invalid='ignore'):
+            lipschitz_ratios = np.divide(f_differences, distances)
+            lipschitz_ratios = np.nan_to_num(lipschitz_ratios, nan=0.0, posinf=0.0, neginf=0.0)
+
+        maxL = np.max(lipschitz_ratios)
+
+#         rates = {i: np.max(lipschitz_ratios[i]) for i in range(n_samples)}
+        rates = {i: maxL for i in range(n_samples)}
+
+        return maxL, rates
+
+    def _underestimate(self, all_X, all_Y, lowfidelity_X, lowfidelity_Y, xrange, yrange, xbounds, ymin_local, overallXrange):
+        time_start = time.time()
+
+        _, indices = np.unique(all_X, axis=0, return_index=True)
+        all_X = all_X[indices]
+        all_Y = all_Y[indices]
+
+        dim = all_X.shape[1]
+        sample_ind = range(len(all_Y))
+        x_ind = range(dim)
+
+        x_dict = {(i, j): all_X[i, j] for i in sample_ind for j in x_ind}
+
+        # Estimate Lipschitz constant using nearest neighbors
+        maxL, rates = self.estimate_lipschitz_constant(all_X, all_Y, n_neighbors=5)
+
+        endpoints = [sample_ind[0], sample_ind[-1]]
+        xdist = np.sqrt(sum((all_X[sample_ind[0]] - all_X[sample_ind[-1]]) ** 2 ))
+        ysum = all_Y[sample_ind[0]] + all_Y[sample_ind[-1]]
+        
+        
+
+        if self.intercept:
+            data = {
+                None: {
+                    'x_ind': {None: list(x_ind)},
+                    'xs': x_dict,
+                    'ys': dict(zip(sample_ind, all_Y)),
+                    'sample_ind': {None: list(sample_ind)},
+                    'L': {None: maxL},
+                    'endpoints': {None: endpoints},  
+                    'ysum': {None: ysum}, 
+                    'xdist': {None: xdist}   
+                }
+            }
+        else:
+            corner_point_ind = np.where(np.all(np.isclose(all_X, 0.0), axis=1))[0]
+            if len(corner_point_ind) == 0:
+                raise ValueError("No corner point at origin found in all_X.")
+            intercept = float(np.min(all_Y[corner_point_ind]))
+            data = {
+                None: {
+                    'x_ind': {None: list(x_ind)},
+                    'xs': x_dict,
+                    'ys': dict(zip(sample_ind, all_Y)),
+                    'sample_ind': {None: list(sample_ind)},
+                    'c': {None: intercept},
+                    'L': {None: maxL},
+                    'endpoints': {None: endpoints},  
+                    'ysum': {None: ysum}, 
+                    'xdist': {None: xdist}  
+                }
+            }
+
+
+            
+        IR = max(xrange/overallXrange)
+        
+        self.solver = pe.SolverFactory('glpk')
+    
+        if IR >= 0.1:
+            self.ddcu = DDCU_model._make_pyomo_ddcu_nonuniform_LC_with_bound(self.intercept)
+        else: 
+            self.ddcu = DDCU_model._make_pyomo_ddcu_nonuniform(self.intercept)
+
+
+        model = self.ddcu.create_instance(data)
+        self.solver.solve(model)
+
+        a = np.array([pe.value(model.a[i]) for i in model.x_ind])
+        b = np.array([pe.value(model.b[i]) for i in model.x_ind])
+        c = pe.value(model.c)
+
+        
+        TOLERANCE = 1e-5
+        if any(val < -TOLERANCE for val in a):
+            print("Negative 'a' coefficients found beyond the tolerance level:")
+#             for j in model.x_ind:
+#                 if model.a[j].value < -TOLERANCE:
+#                     print(f"  a[{j}] = {model.a[j].value}")
+#             model.pprint()
+            raise ValueError("Negative 'a' coefficients found in the model solution.")
+
+
+
+        xopt = self._minimize_1d_vec(a, b, c)
+        flb_s = np.sum(a * xopt**2 + b * xopt) + c
+
+        if abs(flb_s - np.min(all_Y)) <= 1e-5:
+            flb_s = np.min(all_Y)
+
+        self.time_underestimate += time.time() - time_start
+
+        return float(flb_s), maxL, np.array([xopt])
+
+    
+  ##=======================================================================================================================
+
 
 class DDCU_model:
     """

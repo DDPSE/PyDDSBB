@@ -12,7 +12,7 @@ import PyDDSBB._underestimators
 import time
 from PyDDSBB._node import Node
 from PyDDSBB._splitter import Splitter
-from PyDDSBB._machine_learning import LocalSVR
+from PyDDSBB._machine_learning import LocalSVR, NN, MFSM
 import pyomo.environ as pe
 
 UNDERESTIMATORS = {'Quadratic':  PyDDSBB._underestimators.DDCU_Nonuniform, 
@@ -20,6 +20,12 @@ UNDERESTIMATORS = {'Quadratic':  PyDDSBB._underestimators.DDCU_Nonuniform,
                    'Hybrid-Lipschitz-QU': PyDDSBB._underestimators.DDCU_Nonuniform_with_LC_and_IC,
                    'Lipschitz-QUB': PyDDSBB._underestimators.DDCU_Nonuniform_with_LC_and_bound,  
                    'Hybrid-Lipschitz-QUB': PyDDSBB._underestimators.DDCU_Nonuniform_with_LC_and_IC_and_bound}
+
+MULTIFIDELITY_MODELS = {
+    'SVR':  LocalSVR,   
+    'NN':   NN,        
+    'MFSM': MFSM,      
+}
 
 INFINITY = np.inf
 
@@ -83,20 +89,36 @@ class NodeOperation:
         """
         Inputs
         ------
-        multifidelity:  bool
-                        True to turn on multifidelity option 
+        multifidelity:  String or False
+                        multifidelity is a string key like 'SVR', 'NN', or 'MFSM'
+                        String (from available options) to turn on multifidelity option 
                         False to turn off multifidelity option
         split_method: str
         variable_selection: str
         underestimator_option: str
         minimum_bd: float 
         """
-        self._underestimate = UNDERESTIMATORS[underestimator_option]()._underestimate        
-        self.multifidelity = multifidelity 
+        self._underestimate = UNDERESTIMATORS[underestimator_option]()._underestimate 
         self.split = Splitter(split_method, variable_selection, minimum_bd).split  
-        self.variable_selection = variable_selection
-        if multifidelity is not False or self.variable_selection == 'svr_var_select':
-            self.MF = LocalSVR()        
+        self.variable_selection = variable_selection    
+        self.multifidelity = multifidelity 
+        if multifidelity in MULTIFIDELITY_MODELS:
+            self.multifidelity = True
+            self.MF = MULTIFIDELITY_MODELS[multifidelity]()  
+        elif multifidelity in (False, None):
+            self.multifidelity = False
+            
+            """Still create an SVR model if we need it for variable selection"""
+
+            self.MF = LocalSVR() if self.variable_selection == 'svr_var_select' else None
+        else:
+            
+            """Unknown option: fail early and clearly"""
+            raise ValueError(
+                f"Unknown multifidelity option: {multifidelity}. "
+                f"Use one of {list(MULTIFIDELITY_MODELS.keys())} or False."
+            )
+  
         self.time_underestimate = 0.
     def _set_adaptive(self, adaptive_number):
         """

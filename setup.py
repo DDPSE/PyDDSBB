@@ -10,7 +10,7 @@ from setuptools import setup
 
 setup(
       name = 'PyDDSBB',
-      version = '0.1.3',
+      version = '2.0',
       description = 'Data-driven Spatial Branch-and-bound Algorithm for Python',
       author = ['Jianyuan Zhai', 'Suryateja Ravutla', 'Fani Boukouvala'],
       author_email = ['zhaijianyuan@gmail.com', 'suryateja.ravutla@gmail.com', 'fani.boukouvala@chbe.gatech.edu'],

@@ -64,9 +64,11 @@ solver = PyDDSBB.DDSBB(23)
 
 Here are the options for the DDSBB solver: 
 ```Python
-        multifidelity: bool  
-                       True to turn on multifidelity approach 
-                       False to turn off multifidelity approach (default)
+        multifidelity: str or bool  
+                        'SVR': Use a Support Vector Regression (SVR) surrogate
+                        'NN': Use a Neural Network (MLPRegressor) surrogate
+                        'MFSM': Use the composite SVR + NN multifidelity surrogate
+                        False: Disable multifidelity and run DDSBB in standard mode
         split_method: str
                       Methods to determine split point on one dimension
                       select from:

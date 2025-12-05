@@ -9,7 +9,6 @@
 
 import pyomo.environ as pe
 import numpy as np
-import pandas as pd
 import time
 from sklearn.neighbors import NearestNeighbors
 import warnings

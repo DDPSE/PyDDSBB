@@ -1,0 +1,66 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "PyDDSBB"
+version = "2.0.1"
+description = "Python package for Data-driven Spatial Branch-and-Bound algorithm for simulation-based optimization"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE*"]
+requires-python = ">=3.8"
+keywords = [
+    "optimization",
+    "global-optimization",
+    "branch-and-bound",
+    "simulation-based-optimization",
+    "surrogate-modeling",
+]
+
+authors = [
+    { name = "Jianyuan Zhai" },
+    { name = "Suryateja Ravutla" },
+    { name = "Fani Boukouvala" },
+    {email = "zhaijianyuan@gmail.com"},
+    {email = "suryateja.ravutla@gmail.com"},
+    {email = "fani.boukouvala@chbe.gatech.edu"},
+]
+
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Mathematics",
+]
+
+dependencies = [
+    "numpy",
+    "pyomo",
+    "scikit-learn",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=7",
+    "pytest-cov",
+]
+
+[project.urls]
+Homepage = "https://github.com/DDPSE/PyDDSBB"
+Repository = "https://github.com/DDPSE/PyDDSBB"
+Issues = "https://github.com/DDPSE/PyDDSBB/issues"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["PyDDSBB*"]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+pythonpath = ["src"]

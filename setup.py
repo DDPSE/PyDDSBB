@@ -1,20 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Sun Apr 18 18:44:11 2021
-
-@author: JianyuanZhai, SuryatejaRavutla
-"""
 
 from setuptools import setup
 
-setup(
-      name = 'PyDDSBB',
-      version = '2.0',
-      description = 'Data-driven Spatial Branch-and-bound Algorithm for Python',
-      author = ['Jianyuan Zhai', 'Suryateja Ravutla', 'Fani Boukouvala'],
-      author_email = ['zhaijianyuan@gmail.com', 'suryateja.ravutla@gmail.com', 'fani.boukouvala@chbe.gatech.edu'],
-      license = 'MIT',
-      packages = ['PyDDSBB'],
-      install_requires = ['numpy','pyomo','scikit-learn']
-      )
+if __name__ == "__main__":
+    setup()
+

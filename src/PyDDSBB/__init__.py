@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Sun Apr 18 19:14:00 2021
+Updated on Dec 05 20:34:00 2025
 
-@author: Jianyuan Zhai
+@authors: Suryateja Ravutla, Jianyuan Zhai
 """
 
-__author__ = 'Jianyuan Zhai'
+__author1__ = 'Jianyuan Zhai'
+__author2__ = 'Suryateja Ravutla'
+
 __version__= '2.0.1'
 
 from .DDSBBModel import *

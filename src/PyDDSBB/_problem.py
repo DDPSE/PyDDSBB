@@ -28,7 +28,7 @@ class BoundConstrainedSimulation:
         y = np.array([-self._objective(x[j,:]) for j in range(len(x))])
         self.time_sampling += time.time() - time_start
         if len(y) == 1:
-            return float(y)
+            return y.item()
         else:
             return y        
     def _obj_minimize(self,x):
@@ -37,7 +37,7 @@ class BoundConstrainedSimulation:
         y = np.array([self._objective(x[j,:]) for j in range(len(x))])
         self.time_sampling += time.time() - time_start
         if len(y) == 1:
-            return float(y)
+            return y.item()
         else:
             return y
     

@@ -42,7 +42,9 @@ class LHS:
         def select_candidates(col_vec):
             allfilled = list(map(find_filled, col_vec))   
             candidate_cells = np.random.choice([k for k in range(number_cells + 1) if k not in allfilled],number_candidate_points)
-            return [float(np.random.uniform(cell_lo[k],cell_up[k],1)) for k in candidate_cells]
+            # return [float(np.random.uniform(cell_lo[k],cell_up[k],1)) for k in candidate_cells]
+            return [float(np.random.uniform(cell_lo[k], cell_up[k])) for k in candidate_cells]
+
 
        
         candidate_points = [select_candidates(original_design[:,i]) for i in range(dim)]

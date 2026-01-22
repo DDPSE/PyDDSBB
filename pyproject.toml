@@ -19,12 +19,9 @@ keywords = [
 ]
 
 authors = [
-    { name = "Jianyuan Zhai" },
-    { name = "Suryateja Ravutla" },
-    { name = "Fani Boukouvala" },
-    {email = "zhaijianyuan@gmail.com"},
-    {email = "suryateja.ravutla@gmail.com"},
-    {email = "fani.boukouvala@chbe.gatech.edu"},
+  { name = "Jianyuan Zhai", email = "zhaijianyuan@gmail.com" },
+  { name = "Suryateja Ravutla", email = "suryateja.ravutla@gmail.com" },
+  { name = "Fani Boukouvala", email = "fani.boukouvala@chbe.gatech.edu" },
 ]
 
 classifiers = [
@@ -33,7 +30,6 @@ classifiers = [
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
-    "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Intended Audience :: Science/Research",
     "Topic :: Scientific/Engineering",
